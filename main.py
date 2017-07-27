@@ -4,7 +4,8 @@ import re
 import os
 import pickle
 import logging
-
+import traceback
+import datetime
 import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
@@ -22,16 +23,25 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutual_info_score
 from sklearn.decomposition import PCA
 
+import conf
+
+logging.basicConfig(filename="vectorization.log",
+                    filemode='w',
+                    level=logging.DEBUG,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 np.random.seed(6778)
 
 html = re.compile(r'</?\w+[^>]*>')
-quotes_escaped_symbols = re.compile(r'[«»"]|(&\w+;)')
 link = re.compile('(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)')
+quotes_escaped_symbols = re.compile(r'[«»"]|(&\w+;)')
 numbers = re.compile(r'^\d+$')
-stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))
 tokenizer = RegexpTokenizer('\w+')
 mystem = Mystem()
+
+stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))
+
+# TODO: вынести в константы названия папок всякие и проч
 
 
 def preprocess_text(text, do_lemmatize):
@@ -42,64 +52,56 @@ def preprocess_text(text, do_lemmatize):
         words = mystem.lemmatize(' '.join(words))
 
     words = [w for w in words if w.strip() and not numbers.match(w) and w not in stop_words]
-
     return words
 
 
-def collect_data(root_dir, do_lemmatize=True, from_file=True):
-    if from_file:
-        with open('articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='rb') as art_pkl:
-            dump = pickle.load(art_pkl)
-            X, y = dump[0], dump[1]
+def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
+    data = {}
+    if from_file != '':
+        with open(from_file, mode='rb') as art_pkl:
+            data = pickle.load(art_pkl)
     else:
-        X = []
-        y = []
         for cur_root, dirs, files in os.walk(root_dir):
-            if not dirs:
-                l = os.path.split(os.path.split(cur_root)[0])[1]
-                for f in files:
-                    with open(os.path.join(cur_root, f), encoding='cp1251') as tf:
-                        X.append(preprocess_text(tf.read(), do_lemmatize))
-                        y.append(l)
-                        print(len(X))
-
+            for name in files:
+                with open(os.path.join(cur_root, name), encoding=encoding) as tf:
+                    data[name] = preprocess_text(tf.read(), do_lemmatize)
         with open('articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
-            pickle.dump([X, y], art_pkl)
-
-    X, y = shuffle(X, y)
-    distinct_l = list(sorted(set(y)))
-    y = np.array([distinct_l.index(l) for l in y])
-
-    return X, y
+            pickle.dump(data, art_pkl)
+    return data
 
 
-def get_lda_model(corpus, num_topics, from_file=True):
-    if from_file:
-        return LdaModel.load('ldamodel_%s.serialized' % num_topics)
-
-    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
+def fit_lda_model(corpus, num_topics, from_file=''):
+    if from_file != "":
+        return LdaModel.load(from_file)
     # turn our tokenized documents into a id <-> term dictionary
     id2word = Dictionary(corpus)
-
     # convert tokenized documents into a document-term matrix
     corpus = [id2word.doc2bow(text) for text in corpus]
-
     # generate LDA model
     lda = LdaModel(corpus, num_topics=num_topics, id2word=id2word, passes=20)
-    lda.save('ldamodel_%s.serialized' % num_topics)
+
+    lda.save('saved/ldamodel_%s_%s.serialized' % (num_topics, datetime.datetime.now().strftime('%Y%m%d')))
 
     print(lda.print_topics(num_topics=num_topics, num_words=4))
 
     return lda
 
 
-def get_doc2vec_model(docs, dim, n_epochs, from_file=True):
-    if from_file:
-        return Doc2Vec.load('doc2vec_%s.serialized' % dim)
+def fit_doc2vec_model(docs, vector_dim, n_epochs, alpha, min_alpha, window, min_count,
+                      from_file=''):
+    '''
+    :param docs: dict where key is name of file and value is 
+    :param vector_dim: 
+    :param n_epochs: number of training iteration
+    :param from_file: 
+    :return: 
+    '''
+    if from_file != "":
+        return Doc2Vec.load(from_file)
 
-    tagged_docs = [TaggedDocument(w_list, str(index)) for index, w_list in enumerate(docs)]
-    doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=0.025, size=dim, min_alpha=0.025, min_count=0)
+    tagged_docs = [TaggedDocument(w_list, str(index)) for index, w_list in docs.items()]
+    doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, min_alpha=min_alpha,
+                      window=window, min_count=min_count)
 
     for epoch in range(n_epochs):
         if epoch % 20 == 0:
@@ -109,8 +111,8 @@ def get_doc2vec_model(docs, dim, n_epochs, from_file=True):
         doc2vec.alpha -= 0.002  # decrease the learning rate
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
-    doc2vec.save('doc2vec_%s.serialized' % dim)
-
+    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, datetime.datetime.now().strftime('%Y%m%d')))
+    doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
     return doc2vec
 
 
@@ -139,8 +141,8 @@ def transform_to_doc2vec_space(doc2vec, doc):
 def evaluate_models(dim, from_file=True, plot=True):
     X, y = collect_data('articles', from_file)
 
-    lda = get_lda_model(X, dim, from_file)
-    doc2vec = get_doc2vec_model(X, dim, 100, from_file)
+    lda = fit_lda_model(X, dim, from_file)
+    doc2vec = fit_doc2vec_model(X, dim, 100, from_file)
 
     for model in [lda, doc2vec]:
         if isinstance(model, LdaModel):
@@ -182,14 +184,27 @@ def evaluate_models(dim, from_file=True, plot=True):
             plt.show()
 
 
-if __name__ == '__main__':
-    #evaluate_models(dim=50, from_file=True, plot=True)
+def main():
+    print('start process')
+    if conf.mode == 'fit':
+        pass
+    elif conf.mode == 'update':
+        pass
+    elif conf.mode == 'rank':
+        pass
+    else:
+        input("Invalid mode! Try again")
 
-    text = '''<h1>Кирил Бонфильоли «Трилогия о Чарли Маккабрее»</h1>
-        <h2 >Мы уже писали о книге &laquo;Не тычьте в меня этой штукой&raquo;, по мотивам которой был снят фильм &laquo;Мордекай&raquo; с Джонни Деппом в главной роли. В свет вышли еще две книги о приключениях главного героя &mdash; прохиндея, гедониста и сноба Чарли Маккабрея &mdash; ­&laquo;Что-то гадкое в сарае&raquo; и &laquo;После вас с пистолетом&raquo;. </h2>
-        Каждая снабжена объяснением, почему переводчик решил фамилию Mortdecai заменить на Маккабрей. Полные юмора и неожиданных поворотов детективы понравятся всем поклонникам хороших книг. К тому же удобный мини-формат и яркие обложки сделают их прекрасным подарком. Чарли Маккабрей чего только не делает: попадает в китайские спецслужбы и разыскивает преступника в резиновой маске, изучает поверья о бессмертной жабе и охотится за похищенной картиной Гойи, женится на неприлично богатой женщине и даже пытается убить королеву&hellip; Приключения обаятельного авантюриста не оставят вас равнодушными, ведь этими книжками восхищается сам Стивен Фрай.
-        <br />
-        <b>Издательство: </b>LiveBook
-        <br />'''
-    lda = LdaModel.load('ldamodel_50.serialized')
-    print(transform_to_topic_space(lda, preprocess_text(text, True)))
+
+    print("Process finished.\n" )
+    # to save console after executing
+    input("Press enter to exit")
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception as e:
+        logging.exception('')
+        print(traceback.format_exc())
+        input("Press enter to exit")
