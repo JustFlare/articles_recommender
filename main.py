@@ -5,7 +5,6 @@ import os
 import pickle
 import logging
 import traceback
-import datetime
 import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
@@ -13,10 +12,10 @@ from nltk.tokenize import RegexpTokenizer
 
 from pymystem3 import Mystem
 
-from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
-from gensim.models.doc2vec import TaggedDocument
-from gensim.models import Doc2Vec
+from doc2vec import *
+from lda import *
+
 
 from sklearn.utils import shuffle
 from sklearn.cluster import KMeans
@@ -68,74 +67,6 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
         with open('articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
             pickle.dump(data, art_pkl)
     return data
-
-
-def fit_lda_model(corpus, num_topics, from_file=''):
-    if from_file != "":
-        return LdaModel.load(from_file)
-    # turn our tokenized documents into a id <-> term dictionary
-    id2word = Dictionary(corpus)
-    # convert tokenized documents into a document-term matrix
-    corpus = [id2word.doc2bow(text) for text in corpus]
-    # generate LDA model
-    lda = LdaModel(corpus, num_topics=num_topics, id2word=id2word, passes=20)
-
-    lda.save('saved/ldamodel_%s_%s.serialized' % (num_topics, datetime.datetime.now().strftime('%Y%m%d')))
-
-    print(lda.print_topics(num_topics=num_topics, num_words=4))
-
-    return lda
-
-
-def fit_doc2vec_model(docs, vector_dim, n_epochs, alpha, min_alpha, window, min_count,
-                      from_file=''):
-    '''
-    :param docs: dict where key is name of file and value is 
-    :param vector_dim: 
-    :param n_epochs: number of training iteration
-    :param from_file: 
-    :return: 
-    '''
-    if from_file != "":
-        return Doc2Vec.load(from_file)
-
-    tagged_docs = [TaggedDocument(w_list, str(index)) for index, w_list in docs.items()]
-    doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, min_alpha=min_alpha,
-                      window=window, min_count=min_count)
-
-    for epoch in range(n_epochs):
-        if epoch % 20 == 0:
-            print('Training offset: %s' % epoch)
-
-        doc2vec.train(tagged_docs)
-        doc2vec.alpha -= 0.002  # decrease the learning rate
-        doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
-
-    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, datetime.datetime.now().strftime('%Y%m%d')))
-    doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
-    return doc2vec
-
-
-def transform_to_topic_space(lda, doc):
-    """
-    :param LdaModel lda:
-    :param list     doc:
-    """
-    res = np.zeros((lda.num_topics,))
-
-    for item in lda[lda.id2word.doc2bow(doc)]:
-        ind, val = item
-        res[ind] = val
-
-    return res
-
-
-def transform_to_doc2vec_space(doc2vec, doc):
-    """
-    :param Doc2Vec doc2vec:
-    :param list    doc:
-    """
-    return doc2vec.infer_vector(doc)
 
 
 def evaluate_models(dim, from_file=True, plot=True):
@@ -194,7 +125,6 @@ def main():
         pass
     else:
         input("Invalid mode! Try again")
-
 
     print("Process finished.\n" )
     # to save console after executing
