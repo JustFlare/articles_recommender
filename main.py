@@ -4,7 +4,6 @@ import os
 import pickle
 import logging
 import traceback
-import matplotlib.pyplot as plt
 
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
@@ -13,11 +12,6 @@ from pymystem3 import Mystem
 
 from doc2vec import *
 from lda import *
-
-from sklearn.utils import shuffle
-from sklearn.cluster import KMeans
-from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutual_info_score
-from sklearn.decomposition import PCA
 
 import conf
 
@@ -76,8 +70,7 @@ def main():
         data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
                             conf.data_encoding)
         if conf.algorithm == "doc2vec":
-            fit_doc2vec(data, alpha=conf.alpha, min_alpha=conf.min_alpha,
-                        n_epochs=conf.n_epochs, vector_dim=conf.vector_dim, window=conf.window,
+            fit_doc2vec(data, alpha=conf.alpha, n_epochs=conf.n_epochs, vector_dim=conf.vector_dim, window=conf.window,
                         min_count=conf.min_count)
         elif conf.algorithm == "lda":
             fit_lda_model(data, n_topics=conf.topics, iterations=conf.iterations,

@@ -5,9 +5,11 @@ from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
 
+def load_model(filepath):
+    return LdaModel.load(filepath)
+
+
 def fit_lda_model(corpus, n_topics, iterations, passes, min_prob, eval_every):
-    if from_file != "":
-        return LdaModel.load(from_file)
     # turn our tokenized documents into a id <-> term dictionary
     id2word = Dictionary(corpus)
     # convert tokenized documents into a document-term matrix
