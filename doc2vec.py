@@ -5,8 +5,8 @@ from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
 
 
-def fit_doc2vec_model(docs, vector_dim, n_epochs, alpha, min_alpha, window, min_count,
-                      from_file=''):
+def fit_doc2vec(docs, vector_dim, n_epochs, alpha, min_alpha, window, min_count,
+                from_file=''):
     '''
     :param docs: dict where key is name of file and value is 
     :param vector_dim: 

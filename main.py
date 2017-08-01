@@ -1,5 +1,4 @@
 # coding: utf-8
-import numpy as np
 import re
 import os
 import pickle
@@ -12,10 +11,8 @@ from nltk.tokenize import RegexpTokenizer
 
 from pymystem3 import Mystem
 
-from gensim.models.ldamodel import LdaModel
 from doc2vec import *
 from lda import *
-
 
 from sklearn.utils import shuffle
 from sklearn.cluster import KMeans
@@ -23,6 +20,10 @@ from sklearn.metrics.cluster import normalized_mutual_info_score, adjusted_mutua
 from sklearn.decomposition import PCA
 
 import conf
+
+
+class UnexpectedArgumentException(Exception):
+    """Raise for unexpected kind of arguments from config file"""
 
 logging.basicConfig(filename="vectorization.log",
                     filemode='w',
@@ -70,10 +71,10 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
 
 
 def evaluate_models(dim, from_file=True, plot=True):
-    X, y = collect_data('articles', from_file)
+    X = collect_data('articles', from_file)
 
     lda = fit_lda_model(X, dim, from_file)
-    doc2vec = fit_doc2vec_model(X, dim, 100, from_file)
+    doc2vec = fit_doc2vec(X, dim, 100, from_file)
 
     for model in [lda, doc2vec]:
         if isinstance(model, LdaModel):
@@ -118,15 +119,24 @@ def evaluate_models(dim, from_file=True, plot=True):
 def main():
     print('start process')
     if conf.mode == 'fit':
-        pass
+        data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
+                            conf.data_encoding)
+        if conf.algorithm == "doc2vec":
+            fit_doc2vec(data, alpha=conf.alpha, min_alpha=conf.min_alpha,
+                        n_epochs=conf.n_epochs, vector_dim=conf.vector_dim, window=conf.window,
+                        min_count=conf.min_count)
+        elif conf.algorithm == "lda":
+            fit_lda_model()
+        else:
+            raise UnexpectedArgumentException("Invalid algorithm!")
     elif conf.mode == 'update':
         pass
     elif conf.mode == 'rank':
         pass
     else:
-        input("Invalid mode! Try again")
+        raise UnexpectedArgumentException("Invalid mode!")
 
-    print("Process finished.\n" )
+    print("Process finished.\n")
     # to save console after executing
     input("Press enter to exit")
 

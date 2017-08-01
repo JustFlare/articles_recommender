@@ -6,7 +6,10 @@ lemmatized_data = "./saved/lemmatized.pkl"  # путь к лемматизиро
 data_dir = './articles'  # путь к папке с данными (может быть любое количество подпапок). ВАЖНО: файлы должны быть пронумерованы уникальными индексами
 data_encoding = "cp1251"  # кодировка файлов в папке, например utf-8, cp1251
 
-# параметры алгоритмов. я выделил наиболее важные на свой взгляд, полный список здесь: https://radimrehurek.com/gensim/models/doc2vec.html
+# параметры алгоритмов. я выделил наиболее важные на свой взгляд, полные списки и доки:
+# doc2vc: https://radimrehurek.com/gensim/models/doc2vec.html
+# lda: https://radimrehurek.com/gensim/models/ldamodel.html
+# значения - параметры по умолчанию
 
 # doc2vec:
 n_epochs = 50  # количество итераций при обучении модели
@@ -17,4 +20,8 @@ min_alpha = 0.0001
 min_count = 0  # игнорировать все слова с частотой ниже заданной
 
 # lda:
-topics = 50
+topics = 100  # количество топиков (тем)
+passes = 1  # количество полных прогонов обучения (подробней тут: https://groups.google.com/forum/#!topic/gensim/ojySenxQHi4)
+iterations = 50  # ограничение на количество раз, которое алгоритм будет вызывать Expectation step в EM алгоритме
+eval_every = 10  # каждую eval_every условную итерацию оценивать модель через расчет перплексии (подробней см. здесь: http://www.machinelearning.ru/wiki/images/0/0c/NizhibitskyLomonosovSlides14.pdf)
+min_prob = 0.01  # вероятностный фильтер топиков (топики с меньшей вероятностью отсекаются)
