@@ -70,52 +70,6 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
     return data
 
 
-def evaluate_models(dim, from_file=True, plot=True):
-    X = collect_data('articles', from_file)
-
-    lda = fit_lda_model(X, dim, from_file)
-    doc2vec = fit_doc2vec(X, dim, 100, from_file)
-
-    for model in [lda, doc2vec]:
-        if isinstance(model, LdaModel):
-            fit_X = [transform_to_topic_space(model, x) for x in X]
-        else:
-            fit_X = [transform_to_doc2vec_space(model, x) for x in X]
-
-        cls = KMeans(n_clusters=len(set(y)))
-        cls.fit(fit_X)
-
-        pred_y = cls.labels_
-        print('%s\nn_clusters=%s\nnormalized_mutual_info_score: %s\nadjusted_mutual_info_score: %s' % (
-            type(model),
-            cls.n_clusters,
-            normalized_mutual_info_score(y, pred_y),
-            adjusted_mutual_info_score(y, pred_y)
-        ))
-
-        if plot:
-            pca = PCA(n_components=2)
-            reduced_data = pca.fit_transform(fit_X)
-            # Percentage of variance explained for each components
-            print('explained variance ratio (first two components): %s' % str(pca.explained_variance_ratio_))
-
-            plt.figure()
-            for color, i in zip('bgrcmyk', range(cls.n_clusters)):
-                plt.scatter(reduced_data[y == i, 0], reduced_data[y == i, 1],
-                            color=color, s=10, alpha=.8, lw=2, label=i)
-            plt.legend(loc='best', shadow=False, scatterpoints=1)
-            plt.title('True labels\nPCA of %s' % type(model))
-
-            plt.figure()
-            for color, i in zip('bgrcmyk', range(cls.n_clusters)):
-                plt.scatter(reduced_data[pred_y == i, 0], reduced_data[pred_y == i, 1],
-                            color=color, s=10, alpha=.8, lw=2, label=i)
-            plt.legend(loc='best', shadow=False, scatterpoints=1)
-            plt.title('Predicted labels\nPCA of %s' % type(model))
-
-            plt.show()
-
-
 def main():
     print('start process')
     if conf.mode == 'fit':
@@ -126,7 +80,9 @@ def main():
                         n_epochs=conf.n_epochs, vector_dim=conf.vector_dim, window=conf.window,
                         min_count=conf.min_count)
         elif conf.algorithm == "lda":
-            fit_lda_model()
+            fit_lda_model(data, n_topics=conf.topics, iterations=conf.iterations,
+                          min_prob=conf.min_prob, passes=conf.passes,
+                          eval_every=conf.eval_every)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
     elif conf.mode == 'update':
