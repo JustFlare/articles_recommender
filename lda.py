@@ -7,7 +7,7 @@ from gensim.models.ldamodel import LdaModel
 
 def get_filename(n_topics):
     dt = datetime.datetime.now().strftime('%m%d_%H%M')
-    return 'saved/ldamodel_%s_%s.serialized' % (n_topics, dt)
+    return 'saved/lda_%s_%s.serialized' % (n_topics, dt)
 
 
 def make_corpus(docs):

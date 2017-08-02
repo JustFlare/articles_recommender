@@ -24,8 +24,6 @@ logging.basicConfig(filename="vectorization.log",
                     level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-np.random.seed(6778)
-
 html = re.compile(r'</?\w+[^>]*>')
 link = re.compile('(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)')
 quotes_escaped_symbols = re.compile(r'[«»"]|(&\w+;)')
