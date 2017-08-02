@@ -9,7 +9,7 @@ def load_model(filepath):
     return LdaModel.load(filepath)
 
 
-def fit_lda_model(corpus, n_topics, iterations, passes, min_prob, eval_every):
+def fit_model(corpus, n_topics, iterations, passes, min_prob, eval_every):
     # turn our tokenized documents into a id <-> term dictionary
     id2word = Dictionary(corpus)
     # convert tokenized documents into a document-term matrix

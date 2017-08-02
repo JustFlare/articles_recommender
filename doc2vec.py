@@ -9,7 +9,7 @@ def load_model(filepath):
     return Doc2Vec.load(filepath)
 
 
-def fit_doc2vec(docs, vector_dim, n_epochs, alpha, window, min_count):
+def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
     '''
     :param docs: dict where key is name of file and value is 
     :param vector_dim: dimensionality of the feature vector
