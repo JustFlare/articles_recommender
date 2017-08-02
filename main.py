@@ -66,9 +66,10 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
 
 def main():
     print('start process')
+    data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
+                        conf.data_encoding)
+
     if conf.mode == 'fit':
-        data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
-                            conf.data_encoding)
         if conf.algorithm == "doc2vec":
             doc2vec.fit_model(data, alpha=conf.alpha, n_epochs=conf.n_epochs,
                               vector_dim=conf.vector_dim, window=conf.window,
@@ -79,8 +80,15 @@ def main():
                           eval_every=conf.eval_every)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
+
     elif conf.mode == 'update':
-        pass
+        if conf.algorithm == "doc2vec":
+            # TODO: mb print warning that updating doc2vec is not recommended?
+            doc2vec.update_model(conf.saved_model, data, conf.n_epochs)
+        elif conf.algorithm == "lda":
+            lda.update_model(conf.saved_model, data)
+        else:
+            raise UnexpectedArgumentException("Invalid algorithm!")
     elif conf.mode == 'rank':
         pass
     else:
