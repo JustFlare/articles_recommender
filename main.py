@@ -7,7 +7,6 @@ import traceback
 
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
-
 from pymystem3 import Mystem
 
 import doc2vec
@@ -50,6 +49,7 @@ def preprocess_text(text, do_lemmatize):
 def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
     data = {}
     if from_file != '':
+        logging.info("loading data from file")
         with open(from_file, mode='rb') as art_pkl:
             data = pickle.load(art_pkl)
     else:
@@ -57,22 +57,26 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
             for name in files:
                 with open(os.path.join(cur_root, name), encoding=encoding) as tf:
                     data[name] = preprocess_text(tf.read(), do_lemmatize)
+        logging.info("saving collected data")
         with open('articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
             pickle.dump(data, art_pkl)
     return data
 
 
 def main():
-    print('start process')
+    print('Start process')
+    logging.info("start\ncollecting data...")
     data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
                         conf.data_encoding)
 
     if conf.mode == 'fit':
         if conf.algorithm == "doc2vec":
+            logging.info("fitting doc2vec...")
             doc2vec.fit_model(data, alpha=conf.alpha, n_epochs=conf.n_epochs,
                               vector_dim=conf.vector_dim, window=conf.window,
                               min_count=conf.min_count)
         elif conf.algorithm == "lda":
+            logging.info("fitting lda...")
             lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
                           min_prob=conf.min_prob, passes=conf.passes,
                           eval_every=conf.eval_every)
@@ -81,18 +85,22 @@ def main():
 
     elif conf.mode == 'update':
         if conf.algorithm == "doc2vec":
+            logging.info("updating doc2vec model {0}".format(conf.saved_model))
             # TODO: mb print warning that updating doc2vec is not recommended?
             doc2vec.update_model(conf.saved_model, data, conf.n_epochs)
         elif conf.algorithm == "lda":
+            logging.info("updating lda model {0}".format(conf.saved_model))
             lda.update_model(conf.saved_model, data)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
+
     elif conf.mode == 'rank':
         pass
     else:
         raise UnexpectedArgumentException("Invalid mode!")
 
     print("Process finished.\n")
+    logging.info("Process finished.")
     # to save console after executing
     input("Press enter to exit")
 
