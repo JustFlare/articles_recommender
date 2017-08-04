@@ -7,9 +7,12 @@ from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
 
-def get_filename(n_topics):
+def get_filename(n_topics, file_type):
     dt = datetime.datetime.now().strftime('%m%d_%H%M')
-    return 'saved/lda_%s_%s.serialized' % (n_topics, dt)
+    if file_type == 'result_file':
+        return 'result_lda_%s.txt' % dt
+    else:
+        return 'saved/lda_%s_%s.serialized' % (n_topics, dt)
 
 
 def make_corpus(docs):
@@ -33,13 +36,16 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,
                    passes=passes, minimum_probability=min_prob, eval_every=eval_every)
     logging.info("saving model...")
-    lda.save(get_filename(n_topics))
+    lda.save(get_filename(n_topics, file_type='model'))
     # print(lda.print_topics(num_topics=n_topics, num_words=4))
 
     # get all-vs-all pairwise similarities
-    index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best)
-    for similarities in index:
-        print(similarities)
+    index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best+1)
+    filenames = list(data.keys())
+    with open(get_filename(n_topics, file_type='result_file'), mode='w') as res_file:
+        for i, similarities in enumerate(index):
+            top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
+            res_file.write('%s: %s\n' % (filenames[i], top_similar))
 
 
 def update_model(saved_model_path, docs):
@@ -50,7 +56,7 @@ def update_model(saved_model_path, docs):
     logging.info("updating model")
     lda.update(corpus)
     logging.info("saving model...")
-    lda.save(get_filename(lda.n_topics))
+    lda.save(get_filename(lda.n_topics, file_type='model'))
 
 
 def transform_to_topic_space(lda, doc):
