@@ -5,6 +5,7 @@ import pickle
 import logging
 import traceback
 
+from collections import OrderedDict
 from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from pymystem3 import Mystem
@@ -47,7 +48,7 @@ def preprocess_text(text, do_lemmatize):
 
 
 def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
-    data = {}
+    data = OrderedDict()
     if from_file != '':
         logging.info("loading data from file")
         with open(from_file, mode='rb') as art_pkl:
@@ -79,7 +80,7 @@ def main():
             logging.info("fitting lda...")
             lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
                           min_prob=conf.min_prob, passes=conf.passes,
-                          eval_every=conf.eval_every)
+                          eval_every=conf.eval_every, n_best=conf.num_best)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
 
