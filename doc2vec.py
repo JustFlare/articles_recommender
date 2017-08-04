@@ -54,7 +54,7 @@ def update_model(saved_model_path, docs, n_epochs):
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
     logging.info("saving model...")
-    doc2vec.save(get_filename(doc2vec.vector_dim))
+    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (doc2vec.vector_dim, current_date()))
 
 
 def transform_to_doc2vec_space(doc2vec, doc):
