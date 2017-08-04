@@ -5,9 +5,8 @@ from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
 
 
-def get_filename(vector_dim):
-    dt = datetime.datetime.now().strftime('%m%d_%H%M')
-    return 'saved/doc2vec_%s_%s.serialized' % (vector_dim, dt)
+def current_date():
+    return datetime.datetime.now().strftime('%m%d_%H%M')
 
 
 def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
@@ -34,9 +33,10 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
     logging.info("saving model...")
-    doc2vec.save(get_filename(vector_dim))
+    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, current_date()))
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
-    return doc2vec
+
+    # 'result_doc2vec_%s.txt' % dt
 
 
 def update_model(saved_model_path, docs, n_epochs):
