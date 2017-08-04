@@ -2,6 +2,7 @@ import datetime
 import logging
 import numpy as np
 
+from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
@@ -13,23 +14,32 @@ def get_filename(n_topics):
 
 def make_corpus(docs):
     # turn our tokenized documents into a id <-> term dictionary
-    id2word = Dictionary(docs)
+    dictionary = Dictionary(docs)
+
+    # remove extremes (similar to the min/max df step used when creating the tf-idf matrix)
+    # TODO: сделать задание этих параметров юзером
+    # dictionary.filter_extremes(no_below=1, no_above=0.8)
+
     # convert tokenized documents into a document-term matrix
-    corpus = [id2word.doc2bow(text) for text in docs]
-    return id2word, corpus
+    corpus = [dictionary.doc2bow(text) for text in docs]
+    return dictionary, corpus
 
 
-def fit_model(docs, n_topics, iterations, passes, min_prob, eval_every):
+def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     logging.info("creating corpus...")
-    id2word, corpus = make_corpus(docs)
+    dictionary, corpus = make_corpus(list(data.values()))
     # generate LDA model
     logging.info("training model...")
-    lda = LdaModel(corpus, num_topics=n_topics, id2word=id2word, iterations=iterations,
+    lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,
                    passes=passes, minimum_probability=min_prob, eval_every=eval_every)
     logging.info("saving model...")
     lda.save(get_filename(n_topics))
     # print(lda.print_topics(num_topics=n_topics, num_words=4))
-    return lda
+
+    # get all-vs-all pairwise similarities
+    index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best)
+    for similarities in index:
+        print(similarities)
 
 
 def update_model(saved_model_path, docs):
