@@ -14,7 +14,7 @@ lda_vs_doc2vec.ipynb
 /saved
 *.serialized
 *.pkl
-
+sim_index*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
