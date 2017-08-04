@@ -7,12 +7,8 @@ from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
 
-def get_filename(n_topics, file_type):
-    dt = datetime.datetime.now().strftime('%m%d_%H%M')
-    if file_type == 'result_file':
-        return 'result_lda_%s.txt' % dt
-    else:
-        return 'saved/lda_%s_%s.serialized' % (n_topics, dt)
+def current_date():
+    return datetime.datetime.now().strftime('%m%d_%H%M')
 
 
 def make_corpus(docs):
@@ -36,27 +32,40 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,
                    passes=passes, minimum_probability=min_prob, eval_every=eval_every)
     logging.info("saving model...")
-    lda.save(get_filename(n_topics, file_type='model'))
+    dt = current_date()
+    lda.save('saved/lda_%s_%s.serialized' % (n_topics, dt))
     # print(lda.print_topics(num_topics=n_topics, num_words=4))
 
     # get all-vs-all pairwise similarities
+    logging.info("creating index...")
     index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best+1)
     filenames = list(data.keys())
-    with open(get_filename(n_topics, file_type='result_file'), mode='w') as res_file:
+    logging.info("write all similarities to result file")
+    with open('result_lda_%s.txt' % current_date(), mode='w') as res_file:
         for i, similarities in enumerate(index):
             top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
             res_file.write('%s: %s\n' % (filenames[i], top_similar))
+    logging.info("save index")
+    index.save('saved/lda_index_%s.index' % dt)
 
 
-def update_model(saved_model_path, docs):
+def update_model(saved_model_path, data):
     logging.info("creating corpus...")
-    id2word, corpus = make_corpus(docs)
-    logging.info("loading model")
+    id2word, corpus = make_corpus(list(data.values()))
+
+    logging.info("loading model and its index")
     lda = LdaModel.load(saved_model_path)
-    logging.info("updating model")
+    # TODO: может быть лучше сделать явное указание пользователем индекса в конфиге?
+    index = Similarity.load('saved/lda_index_%s.index' % saved_model_path[-20:-11])
+
+    logging.info("updating model and index")
     lda.update(corpus)
-    logging.info("saving model...")
-    lda.save(get_filename(lda.n_topics, file_type='model'))
+    index.add_documents(lda[corpus])
+
+    logging.info("saving...")
+    dt = current_date()
+    lda.save('saved/lda_%s_%s.serialized' % (lda.n_topics, dt))
+    index.save('saved/lda_index_%s.index' % dt)
 
 
 def transform_to_topic_space(lda, doc):
