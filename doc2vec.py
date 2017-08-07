@@ -9,7 +9,7 @@ def current_date():
     return datetime.datetime.now().strftime('%m%d_%H%M')
 
 
-def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
+def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     '''
     :param docs: dict where key is name of file and value is 
     :param vector_dim: dimensionality of the feature vector
@@ -20,14 +20,13 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
     :return: fitted doc2vec model
     '''
     logging.info("creating tagged docs...")
-    tagged_docs = [TaggedDocument(w_list, str(index)) for index, w_list in docs.items()]
+    tagged_docs = [TaggedDocument(w_list, [str(index)]) for index, w_list in docs.items()]
     doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, window=window,
                       min_count=min_count)
     logging.info("start training")
     for epoch in range(n_epochs):
         if epoch % 20 == 0:
             logging.info('Training offset: %s' % epoch)
-            print('Training offset: %s' % epoch)
         doc2vec.train(tagged_docs)
         doc2vec.alpha -= 0.002  # decrease the learning rate
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
@@ -36,7 +35,10 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count):
     doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, current_date()))
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
-    # 'result_doc2vec_%s.txt' % dt
+    with open('result_doc2vec_%s.txt' % current_date(), mode='w') as res_file:
+        for doc_index in docs.keys():
+            top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
+            res_file.write('%s: %s\n' % (doc_index, top_similar))
 
 
 def update_model(saved_model_path, docs, n_epochs):
