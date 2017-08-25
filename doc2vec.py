@@ -27,7 +27,7 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     for epoch in range(n_epochs):
         if epoch % 20 == 0:
             logging.info('Training offset: %s' % epoch)
-        doc2vec.train(tagged_docs)
+        doc2vec.train(tagged_docs, total_examples=doc2vec.corpus_count, epochs=doc2vec.iter)
         doc2vec.alpha -= 0.002  # decrease the learning rate
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
@@ -51,7 +51,7 @@ def update_model(saved_model_path, docs, n_epochs):
         if epoch % 20 == 0:
             logging.info('Training offset: %s' % epoch)
             print('Training offset: %s' % epoch)
-        doc2vec.train(tagged_docs)
+        doc2vec.train(tagged_docs, total_examples=doc2vec.corpus_count, epochs=doc2vec.iter)
         doc2vec.alpha -= 0.002  # decrease the learning rate
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
