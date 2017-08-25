@@ -4,11 +4,12 @@ todo.txt
 отчет времени.txt
 
 test.py
+train_models.py
 lda_vs_doc2vec.ipynb
 
 /articles
 /old
-/test_data*
+/test_data
 
 # serialized data
 /saved
