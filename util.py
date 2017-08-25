@@ -1,5 +1,6 @@
 import datetime
 import conf
+import os
 
 
 def current_date():
@@ -11,5 +12,5 @@ def get_header(filename):
         return f.readline().replace('<h1>', '').replace('</h1>', '').replace('&quot;', '"')
 
 
-
-
+def get_filename(p):
+    return os.path.split(p)[1]

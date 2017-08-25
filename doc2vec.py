@@ -1,7 +1,7 @@
 import logging
 import os
 
-from util import get_header, current_date
+from util import get_header, current_date, get_filename
 
 from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
@@ -37,13 +37,14 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     with open('result_doc2vec_%s_%sdim.txt' % (dt, vector_dim), mode='w') as res_file:
         with open('result_doc2vec_%s_%sdim_summary.txt' % (dt, vector_dim), mode='w') as res_file_sum:
             for doc_index in docs.keys():
-                fname = os.path.split(doc_index)[1]
+                fname = get_filename(doc_index)
                 top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
-                res_file.write('%s: %s\n' % (fname, top_similar))
+                res_file.write('%s: %s\n' % (fname,
+                                             [(get_filename(p), c) for (p, c) in top_similar]))
 
                 res_file_sum.write('%s: %s\n' % (fname, get_header(doc_index)))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (os.path.split(sim[0])[1], get_header(sim[0])))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_header(sim[0])))
                 res_file_sum.write('-'*100 + '\n')
 
 

@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import os
 
-from util import get_header, current_date
+from util import get_header, current_date, get_filename
 
 from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
@@ -37,17 +37,17 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     # get all-vs-all pairwise similarities
     logging.info("creating index...")
     index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best+1)
-    filenames = list(data.keys())
+    paths = list(data.keys())
     logging.info("write all similarities to result file")
     with open('result_lda_%s_%stopics.txt' % (dt, n_topics), mode='w') as res_file:
         with open('result_lda_%s_%stopics_summary.txt' % (dt, n_topics), mode='w') as res_file_sum:
             for i, similarities in enumerate(index):
-                top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
-                res_file.write('%s: %s\n' % (filenames[i], top_similar))
+                top_similar = [(paths[s[0]], s[1]) for s in similarities if s[0] != i]
+                res_file.write('%s: %s\n' % (get_filename(paths[i]), top_similar))
 
-                res_file_sum.write('%s: %s\n' % (filenames[i], get_header(filenames[i])))
+                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]), get_header(paths[i])))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (os.path.split(sim[0])[1], get_header(sim[0])))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_header(sim[0])))
                 res_file_sum.write('-' * 100 + '\n')
 
     logging.info("save index")
