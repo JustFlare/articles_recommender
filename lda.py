@@ -43,7 +43,8 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
         with open('result_lda_%s_%stopics_summary.txt' % (dt, n_topics), mode='w') as res_file_sum:
             for i, similarities in enumerate(index):
                 top_similar = [(paths[s[0]], s[1]) for s in similarities if s[0] != i]
-                res_file.write('%s: %s\n' % (get_filename(paths[i]), top_similar))
+                res_file.write('%s: %s\n' % (get_filename(paths[i]),
+                                             [(get_filename(p), c) for (p, c) in top_similar]))
 
                 res_file_sum.write('%s: %s\n' % (get_filename(paths[i]), get_header(paths[i])))
                 for sim in top_similar:
