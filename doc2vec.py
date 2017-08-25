@@ -1,12 +1,10 @@
 import logging
-import datetime
+import os
+
+from util import get_header, current_date
 
 from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
-
-
-def current_date():
-    return datetime.datetime.now().strftime('%m%d_%H%M')
 
 
 def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
@@ -20,7 +18,7 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     :return: fitted doc2vec model
     '''
     logging.info("creating tagged docs...")
-    tagged_docs = [TaggedDocument(w_list, [str(index)]) for index, w_list in docs.items()]
+    tagged_docs = [TaggedDocument(w_list, [index]) for index, w_list in docs.items()]
     doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, window=window,
                       min_count=min_count)
     logging.info("start training")
@@ -32,13 +30,21 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
     logging.info("saving model...")
-    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, current_date()))
+    dt = current_date()
+    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, dt))
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
-    with open('result_doc2vec_%s.txt' % current_date(), mode='w') as res_file:
-        for doc_index in docs.keys():
-            top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
-            res_file.write('%s: %s\n' % (doc_index, top_similar))
+    with open('result_doc2vec_%s_%sdim.txt' % (dt, vector_dim), mode='w') as res_file:
+        with open('result_doc2vec_%s_%sdim_summary.txt' % (dt, vector_dim), mode='w') as res_file_sum:
+            for doc_index in docs.keys():
+                fname = os.path.split(doc_index)[1]
+                top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
+                res_file.write('%s: %s\n' % (fname, top_similar))
+
+                res_file_sum.write('%s: %s\n' % (fname, get_header(doc_index)))
+                for sim in top_similar:
+                    res_file_sum.write('%s: %s' % (os.path.split(sim[0])[1], get_header(sim[0])))
+                res_file_sum.write('-'*100 + '\n')
 
 
 def update_model(saved_model_path, docs, n_epochs):

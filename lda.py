@@ -1,14 +1,12 @@
-import datetime
 import logging
 import numpy as np
+import os
+
+from util import get_header, current_date
 
 from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
-
-
-def current_date():
-    return datetime.datetime.now().strftime('%m%d_%H%M')
 
 
 def make_corpus(docs):
@@ -41,15 +39,22 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best+1)
     filenames = list(data.keys())
     logging.info("write all similarities to result file")
-    with open('result_lda_%s.txt' % current_date(), mode='w') as res_file:
-        for i, similarities in enumerate(index):
-            top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
-            res_file.write('%s: %s\n' % (filenames[i], top_similar))
+    with open('result_lda_%s_%stopics.txt' % (dt, n_topics), mode='w') as res_file:
+        with open('result_lda_%s_%stopics_summary.txt' % (dt, n_topics), mode='w') as res_file_sum:
+            for i, similarities in enumerate(index):
+                top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
+                res_file.write('%s: %s\n' % (filenames[i], top_similar))
+
+                res_file_sum.write('%s: %s\n' % (filenames[i], get_header(filenames[i])))
+                for sim in top_similar:
+                    res_file_sum.write('%s: %s' % (os.path.split(sim[0])[1], get_header(sim[0])))
+                res_file_sum.write('-' * 100 + '\n')
+
     logging.info("save index")
     index.save('saved/lda_index_%s.index' % dt)
 
 
-def update_model(saved_model_path, data):
+def update_model(data, saved_model_path):
     logging.info("creating corpus...")
     id2word, corpus = make_corpus(list(data.values()))
 
@@ -66,6 +71,35 @@ def update_model(saved_model_path, data):
     dt = current_date()
     lda.save('saved/lda_%s_%s.serialized' % (lda.n_topics, dt))
     index.save('saved/lda_index_%s.index' % dt)
+
+
+def rank(new_docs, saved_model_path, n_best):
+    logging.info("creating corpus from new documents...")
+    # TODO: тут нужно старый словарь восстанвливать
+    id2word, corpus = make_corpus(list(new_docs.values()))
+
+    logging.info("loading model and its index")
+    lda = LdaModel.load(saved_model_path)
+    index = Similarity.load('saved/lda_index_%s.index' % saved_model_path[-20:-11])
+
+    # add new documents to similarity index in order to compare them also betweeen themselves
+    logging.info("update index")
+    lda_corpus = lda[corpus]
+    index.num_best = n_best
+    index.add_documents(lda_corpus)
+    # lda.update(corpus)
+
+    # TODO: нужно продумать механизм сохранения перзистентности
+    filenames = None
+
+    logging.info("write all similarities to result file")
+    with open('result_lda_%s.txt' % current_date(), mode='w') as res_file:
+        for i, similarities in enumerate(index[lda_corpus]):
+            top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
+            res_file.write('%s: %s\n' % (filenames[i], top_similar))
+
+    logging.info("save updated index")
+    index.save('saved/lda_index_%s.index' % saved_model_path[-20:-11])
 
 
 def transform_to_topic_space(lda, doc):

@@ -19,6 +19,8 @@ import conf
 class UnexpectedArgumentException(Exception):
     """Raise for unexpected kind of arguments from config file"""
 
+
+# TODO: мб логи тоже по датам делать и в папку ./log класть?
 logging.basicConfig(filename="vectorization.log",
                     filemode='w',
                     level=logging.DEBUG,
@@ -57,9 +59,9 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
         for cur_root, dirs, files in os.walk(root_dir):
             for name in files:
                 with open(os.path.join(cur_root, name), encoding=encoding) as tf:
-                    data[name] = preprocess_text(tf.read(), do_lemmatize)
+                    data[tf.name] = preprocess_text(tf.read(), do_lemmatize)
         logging.info("saving collected data")
-        with open('articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
+        with open('./saved/articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
             pickle.dump(data, art_pkl)
     return data
 
@@ -75,7 +77,7 @@ def main():
             logging.info("fitting doc2vec...")
             doc2vec.fit_model(data, alpha=conf.alpha, n_epochs=conf.n_epochs,
                               vector_dim=conf.vector_dim, window=conf.window,
-                              min_count=conf.min_count)
+                              min_count=conf.min_count, n_best=conf.num_best)
         elif conf.algorithm == "lda":
             logging.info("fitting lda...")
             lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
@@ -91,12 +93,13 @@ def main():
             doc2vec.update_model(conf.saved_model, data, conf.n_epochs)
         elif conf.algorithm == "lda":
             logging.info("updating lda model {0}".format(conf.saved_model))
-            lda.update_model(conf.saved_model, data)
+            lda.update_model(data, conf.saved_model)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
 
     elif conf.mode == 'rank':
-        pass
+        print("not implemented yet")
+
     else:
         raise UnexpectedArgumentException("Invalid mode!")
 
