@@ -1,6 +1,5 @@
 import logging
 import numpy as np
-import os
 
 from util import get_header, current_date, get_filename
 
@@ -34,13 +33,13 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     lda.save('saved/lda_%s_%s.serialized' % (n_topics, dt))
     # print(lda.print_topics(num_topics=n_topics, num_words=4))
 
-    # get all-vs-all pairwise similarities
+    # save all-vs-all pairwise similarities
     logging.info("creating index...")
     index = Similarity('./sim_index', lda[corpus], num_features=n_topics, num_best=n_best+1)
     paths = list(data.keys())
     logging.info("write all similarities to result file")
-    with open('result_lda_%s_%stopics.txt' % (dt, n_topics), mode='w') as res_file:
-        with open('result_lda_%s_%stopics_summary.txt' % (dt, n_topics), mode='w') as res_file_sum:
+    with open('result_lda_%s_%stopics.txt' % (dt, n_topics), 'w') as res_file:
+        with open('result_lda_%s_%stopics_summary.txt' % (dt, n_topics), 'w') as res_file_sum:
             for i, similarities in enumerate(index):
                 top_similar = [(paths[s[0]], s[1]) for s in similarities if s[0] != i]
                 res_file.write('%s: %s\n' % (get_filename(paths[i]),
@@ -53,6 +52,16 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
 
     logging.info("save index")
     index.save('saved/lda_index_%s.index' % dt)
+
+    # save topic - words matrix
+    with open("topic_words_%s.txt" % dt, 'w') as f:
+        for topic_words in lda.print_topics(lda.num_topics):
+            f.write("#%s: %s\n" % (topic_words[0], topic_words[1]))
+
+    # save document - topics matrix
+    with open("document_topics_%s.txt" % dt, 'w') as f:
+        for i, topics in enumerate(lda[corpus]):
+            f.write("#%s: %s\n" % (get_filename(paths[i]), topics))
 
 
 def update_model(data, saved_model_path):
