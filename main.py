@@ -10,6 +10,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from pymystem3 import Mystem
 
+from util import get_header
 import doc2vec
 import lda
 
@@ -59,7 +60,8 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
         for cur_root, dirs, files in os.walk(root_dir):
             for name in files:
                 with open(os.path.join(cur_root, name), encoding=encoding) as tf:
-                    data[tf.name] = preprocess_text(tf.read(), do_lemmatize)
+                    text = get_header(tf.name) if conf.only_title else tf.read()
+                    data[tf.name] = preprocess_text(text, do_lemmatize)
         logging.info("saving collected data")
         with open('./saved/articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
             pickle.dump(data, art_pkl)
