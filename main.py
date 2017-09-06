@@ -1,19 +1,15 @@
 # coding: utf-8
-import re
 import os
 import pickle
 import logging
 import traceback
 
 from collections import OrderedDict
-from nltk.corpus import stopwords
-from nltk.tokenize import RegexpTokenizer
-from pymystem3 import Mystem
 
-from util import get_title, cur_date, get_list
+from preprocess import preprocess_text
+from util import get_title, cur_date
 import doc2vec
 import lda
-
 import conf
 
 
@@ -31,27 +27,6 @@ logging.basicConfig(filename="%s/vectorization_%s.log" % (LOG_DIR, cur_date()),
                     filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
-
-html = re.compile(r'</?\w+[^>]*>')
-link = re.compile('(https?://)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)')
-quotes_escaped_symbols = re.compile(r'[«»"]|(&\w+;)')
-numbers = re.compile(r'^\d+$')
-tokenizer = RegexpTokenizer('\w+')
-mystem = Mystem()
-
-stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))\
-    .union(set(get_list(conf.stopwords_file, encoding=conf.data_encoding)))
-
-
-def preprocess_text(text, do_lemmatize):
-    clean_text = link.sub('', quotes_escaped_symbols.sub('', html.sub('', text.lower())))
-
-    words = [w for w in tokenizer.tokenize(clean_text)]
-    if do_lemmatize:
-        words = mystem.lemmatize(' '.join(words))
-
-    words = [w for w in words if w.strip() and not numbers.match(w) and w not in stop_words]
-    return words
 
 
 def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
@@ -112,7 +87,6 @@ def main():
 
     print("Process finished.\n")
     logging.info("Process finished.")
-    # to save console after executing
     input("Press enter to exit")
 
 
