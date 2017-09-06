@@ -1,5 +1,4 @@
 import logging
-import os
 
 from util import get_header, current_date, get_filename
 
@@ -35,16 +34,18 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
     with open('result_doc2vec_%s_%sdim.txt' % (dt, vector_dim), mode='w') as res_file:
-        with open('result_doc2vec_%s_%sdim_summary.txt' % (dt, vector_dim), mode='w') as res_file_sum:
+        with open('result_doc2vec_%s_%sdim_summary.txt' % (dt, vector_dim), mode='w', encoding='utf-8') as res_file_sum:
             for doc_index in docs.keys():
                 fname = get_filename(doc_index)
                 top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
                 res_file.write('%s: %s\n' % (fname,
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
-                res_file_sum.write('%s: %s\n' % (fname, get_header(doc_index)))
+                res_file_sum.write('%s: %s\n' % (fname.encode('utf-8'),
+                                                 get_header(doc_index).encode('utf-8')))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_header(sim[0])))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
+                                                   get_header(sim[0]).encode('utf-8')))
                 res_file_sum.write('-'*100 + '\n')
 
 

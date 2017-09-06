@@ -45,9 +45,11 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
                 res_file.write('%s: %s\n' % (get_filename(paths[i]),
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
-                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]), get_header(paths[i])))
+                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]).encode('utf-8'),
+                                                 get_header(paths[i]).encode('utf-8')))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_header(sim[0])))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
+                                                   get_header(sim[0]).encode('utf-8')))
                 res_file_sum.write('-' * 100 + '\n')
 
     logging.info("save index")
