@@ -21,6 +21,10 @@ class UnexpectedArgumentException(Exception):
     """Raise for unexpected kind of arguments from config file"""
 
 
+SAVED_DIR = "saved"
+if not os.path.isdir(SAVED_DIR):
+    os.makedirs(SAVED_DIR)
+
 LOG_DIR = "log"
 if not os.path.isdir(LOG_DIR):
     os.makedirs(LOG_DIR)
@@ -73,6 +77,7 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
 
 def main():
     print('Start process')
+
     logging.info("start\ncollecting data...")
     data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
                         conf.data_encoding)
@@ -94,7 +99,6 @@ def main():
     elif conf.mode == 'update':
         if conf.algorithm == "doc2vec":
             logging.info("updating doc2vec model {0}".format(conf.saved_model))
-            # TODO: mb print warning that updating doc2vec is not recommended?
             doc2vec.update_model(conf.saved_model, data, conf.n_epochs)
         elif conf.algorithm == "lda":
             logging.info("updating lda model {0}".format(conf.saved_model))
