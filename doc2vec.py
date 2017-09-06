@@ -1,4 +1,5 @@
 import logging
+import os
 
 from util import get_title, cur_date, get_filename
 
@@ -16,6 +17,10 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     :param min_count: ignore all words with total frequency lower than this.
     :return: fitted doc2vec model
     '''
+    dt = cur_date()
+    output_folder = "doc2vec_%sdim_%s" % (vector_dim, dt)
+    os.makedirs(output_folder, exist_ok=True)
+
     logging.info("creating tagged docs...")
     tagged_docs = [TaggedDocument(w_list, [index]) for index, w_list in docs.items()]
     doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, window=window,
@@ -33,8 +38,8 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
     doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, dt))
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
-    with open('result_doc2vec_%s_%sdim.txt' % (dt, vector_dim), mode='w') as res_file:
-        with open('result_doc2vec_%s_%sdim_summary.txt' % (dt, vector_dim), mode='w', encoding='utf-8') as res_file_sum:
+    with open('%s/similarities.txt' % output_folder, mode='w') as res_file:
+        with open('%s/similarities_summary.txt' % output_folder, mode='w', encoding='utf-8') as res_file_sum:
             for doc_index in docs.keys():
                 fname = get_filename(doc_index)
                 top_similar = doc2vec.docvecs.most_similar(doc_index, topn=n_best)
