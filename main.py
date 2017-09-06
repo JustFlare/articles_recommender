@@ -52,7 +52,7 @@ def preprocess_text(text, do_lemmatize):
 
 def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
     data = OrderedDict()
-    if from_file != '':
+    if from_file != '' and do_lemmatize:
         logging.info("loading data from file")
         with open(from_file, mode='rb') as art_pkl:
             data = pickle.load(art_pkl)
