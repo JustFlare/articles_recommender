@@ -44,24 +44,22 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     paths = list(data.keys())
     logging.info("write all similarities to result file")
     with open('%s/similarities.txt' % output_folder, 'w') as res_file:
-        with open('%s/similarities_summary.txt' % output_folder, 'w') as res_file_sum:
+        with open('%s/similarities_summary.txt' % output_folder, 'w', encoding='utf-8') as res_file_sum:
             for i, similarities in enumerate(index):
                 top_similar = [(paths[s[0]], s[1]) for s in similarities if s[0] != i]
                 res_file.write('%s: %s\n' % (get_filename(paths[i]),
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
-                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]).encode('utf-8'),
-                                                 get_title(paths[i]).encode('utf-8')))
+                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]), get_title(paths[i])))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
-                                                   get_title(sim[0]).encode('utf-8')))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_title(sim[0])))
                 res_file_sum.write('-' * 100 + '\n')
 
     logging.info("save index")
     index.save('saved/lda_index_%s.index' % dt)
 
     # save topic - words matrix
-    with open("%s/topic_words.txt" % output_folder, 'w') as f:
+    with open("%s/topic_words.txt" % output_folder, 'w', encoding='utf-8') as f:
         for topic_words in lda.print_topics(lda.num_topics):
             f.write("#%s: %s\n" % (topic_words[0], topic_words[1]))
 

@@ -47,10 +47,10 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
                 res_file_sum.write('%s: %s\n' % (fname.encode('utf-8'),
-                                                 get_title(doc_index).encode('utf-8')))
+                                                 get_title(doc_index)))
                 for sim in top_similar:
-                    res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
-                                                   get_title(sim[0]).encode('utf-8')))
+                    res_file_sum.write('%s: %s' % (get_filename(sim[0]),
+                                                   get_title(sim[0])))
                 res_file_sum.write('-'*100 + '\n')
 
 
