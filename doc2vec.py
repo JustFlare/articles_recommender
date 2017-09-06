@@ -1,6 +1,6 @@
 import logging
 
-from util import get_header, current_date, get_filename
+from util import get_title, cur_date, get_filename
 
 from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
@@ -29,7 +29,7 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
     logging.info("saving model...")
-    dt = current_date()
+    dt = cur_date()
     doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, dt))
     # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
@@ -42,10 +42,10 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
                 res_file_sum.write('%s: %s\n' % (fname.encode('utf-8'),
-                                                 get_header(doc_index).encode('utf-8')))
+                                                 get_title(doc_index).encode('utf-8')))
                 for sim in top_similar:
                     res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
-                                                   get_header(sim[0]).encode('utf-8')))
+                                                   get_title(sim[0]).encode('utf-8')))
                 res_file_sum.write('-'*100 + '\n')
 
 
@@ -64,7 +64,7 @@ def update_model(saved_model_path, docs, n_epochs):
         doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
 
     logging.info("saving model...")
-    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (doc2vec.vector_dim, current_date()))
+    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (doc2vec.vector_dim, cur_date()))
 
 
 def transform_to_doc2vec_space(doc2vec, doc):

@@ -10,7 +10,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from pymystem3 import Mystem
 
-from util import get_header
+from util import get_title, cur_date
 import doc2vec
 import lda
 
@@ -21,8 +21,11 @@ class UnexpectedArgumentException(Exception):
     """Raise for unexpected kind of arguments from config file"""
 
 
-# TODO: мб логи тоже по датам делать и в папку ./log класть?
-logging.basicConfig(filename="vectorization.log",
+LOG_DIR = "log"
+if not os.path.isdir(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
+logging.basicConfig(filename="%s/vectorization_%s.log" % (LOG_DIR, cur_date()),
                     filemode='w',
                     level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -60,7 +63,7 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
         for cur_root, dirs, files in os.walk(root_dir):
             for name in files:
                 with open(os.path.join(cur_root, name), encoding=encoding) as tf:
-                    text = get_header(tf.name) if conf.only_title else tf.read()
+                    text = get_title(tf.name) if conf.only_title else tf.read()
                     data[tf.name] = preprocess_text(text, do_lemmatize)
         logging.info("saving collected data")
         with open('./saved/articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:

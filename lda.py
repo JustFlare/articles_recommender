@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from util import get_header, current_date, get_filename
+from util import get_title, cur_date, get_filename
 
 from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
@@ -29,7 +29,7 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,
                    passes=passes, minimum_probability=min_prob, eval_every=eval_every)
     logging.info("saving model...")
-    dt = current_date()
+    dt = cur_date()
     lda.save('saved/lda_%s_%s.serialized' % (n_topics, dt))
     # print(lda.print_topics(num_topics=n_topics, num_words=4))
 
@@ -46,10 +46,10 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
                 res_file_sum.write('%s: %s\n' % (get_filename(paths[i]).encode('utf-8'),
-                                                 get_header(paths[i]).encode('utf-8')))
+                                                 get_title(paths[i]).encode('utf-8')))
                 for sim in top_similar:
                     res_file_sum.write('%s: %s' % (get_filename(sim[0]).encode('utf-8'),
-                                                   get_header(sim[0]).encode('utf-8')))
+                                                   get_title(sim[0]).encode('utf-8')))
                 res_file_sum.write('-' * 100 + '\n')
 
     logging.info("save index")
@@ -80,7 +80,7 @@ def update_model(data, saved_model_path):
     index.add_documents(lda[corpus])
 
     logging.info("saving...")
-    dt = current_date()
+    dt = cur_date()
     lda.save('saved/lda_%s_%s.serialized' % (lda.n_topics, dt))
     index.save('saved/lda_index_%s.index' % dt)
 
@@ -105,7 +105,7 @@ def rank(new_docs, saved_model_path, n_best):
     filenames = None
 
     logging.info("write all similarities to result file")
-    with open('result_lda_%s.txt' % current_date(), mode='w') as res_file:
+    with open('result_lda_%s.txt' % cur_date(), mode='w') as res_file:
         for i, similarities in enumerate(index[lda_corpus]):
             top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
             res_file.write('%s: %s\n' % (filenames[i], top_similar))
