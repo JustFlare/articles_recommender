@@ -10,7 +10,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import RegexpTokenizer
 from pymystem3 import Mystem
 
-from util import get_title, cur_date
+from util import get_title, cur_date, get_list
 import doc2vec
 import lda
 
@@ -22,12 +22,10 @@ class UnexpectedArgumentException(Exception):
 
 
 SAVED_DIR = "saved"
-if not os.path.isdir(SAVED_DIR):
-    os.makedirs(SAVED_DIR)
+os.makedirs(SAVED_DIR, exist_ok=True)
 
 LOG_DIR = "log"
-if not os.path.isdir(LOG_DIR):
-    os.makedirs(LOG_DIR)
+os.makedirs(LOG_DIR, exist_ok=True)
 
 logging.basicConfig(filename="%s/vectorization_%s.log" % (LOG_DIR, cur_date()),
                     filemode='w',
@@ -41,9 +39,8 @@ numbers = re.compile(r'^\d+$')
 tokenizer = RegexpTokenizer('\w+')
 mystem = Mystem()
 
-stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))
-
-# TODO: вынести в константы названия папок всякие и проч
+stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))\
+    .union(set(get_list(conf.stopwords_file, encoding=conf.data_encoding)))
 
 
 def preprocess_text(text, do_lemmatize):
@@ -70,7 +67,8 @@ def collect_data(root_dir, do_lemmatize=True, from_file='', encoding='cp1251'):
                     text = get_title(tf.name) if conf.only_title else tf.read()
                     data[tf.name] = preprocess_text(text, do_lemmatize)
         logging.info("saving collected data")
-        with open('./saved/articles.%spkl' % ('lemmatized.' if do_lemmatize else ''), mode='wb') as art_pkl:
+        with open('./%s/articles.%spkl' % (SAVED_DIR, 'lemmatized.' if do_lemmatize else ''),
+                  mode='wb') as art_pkl:
             pickle.dump(data, art_pkl)
     return data
 
