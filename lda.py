@@ -10,27 +10,26 @@ from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
 
-def make_corpus(docs):
+def make_corpus(docs, min_df, max_df):
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = Dictionary(docs)
 
-    # remove extremes (similar to the min/max df step used when creating the tf-idf matrix)
-    # TODO: сделать задание этих параметров юзером
-    # dictionary.filter_extremes(no_below=1, no_above=0.8)
+    # remove frequency extremes
+    dictionary.filter_extremes(no_below=min_df, no_above=max_df)
 
     # convert tokenized documents into a document-term matrix
     corpus = [dictionary.doc2bow(text) for text in docs]
     return dictionary, corpus
 
 
-def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
+def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best, min_df, max_df):
     dt = cur_date()
     output_folder = "lda_%stopics_%s" % (n_topics, dt)
     os.makedirs(output_folder, exist_ok=True)
     os.makedirs("%s/separate" % output_folder, exist_ok=True)
 
     logging.info("creating corpus...")
-    dictionary, corpus = make_corpus(list(data.values()))
+    dictionary, corpus = make_corpus(list(data.values()), min_df, max_df)
     # generate LDA model
     logging.info("training model...")
     lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,

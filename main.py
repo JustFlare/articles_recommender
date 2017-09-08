@@ -65,7 +65,8 @@ def main():
             logging.info("fitting lda...")
             lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
                           min_prob=conf.min_prob, passes=conf.passes,
-                          eval_every=conf.eval_every, n_best=conf.num_best)
+                          eval_every=conf.eval_every, n_best=conf.num_best,
+                          min_df=conf.min_df, max_df=conf.max_df)
         else:
             raise UnexpectedArgumentException("Invalid algorithm!")
 
