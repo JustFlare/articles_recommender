@@ -27,6 +27,7 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     dt = cur_date()
     output_folder = "lda_%stopics_%s" % (n_topics, dt)
     os.makedirs(output_folder, exist_ok=True)
+    os.makedirs("%s/separate" % output_folder, exist_ok=True)
 
     logging.info("creating corpus...")
     dictionary, corpus = make_corpus(list(data.values()))
@@ -46,14 +47,21 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best):
     with open('%s/similarities.txt' % output_folder, 'w') as res_file:
         with open('%s/similarities_summary.txt' % output_folder, 'w', encoding='utf-8') as res_file_sum:
             for i, similarities in enumerate(index):
+                cur_fname = get_filename(paths[i])
                 top_similar = [(paths[s[0]], s[1]) for s in similarities if s[0] != i]
-                res_file.write('%s: %s\n' % (get_filename(paths[i]),
+                res_file.write('%s: %s\n' % (cur_fname,
                                              [(get_filename(p), c) for (p, c) in top_similar]))
 
-                res_file_sum.write('%s: %s\n' % (get_filename(paths[i]), get_title(paths[i])))
+                res_file_sum.write('%s: %s\n' % (cur_fname, get_title(paths[i])))
                 for sim in top_similar:
                     res_file_sum.write('%s: %s' % (get_filename(sim[0]), get_title(sim[0])))
                 res_file_sum.write('-' * 100 + '\n')
+
+                # for each doc we make separate file which containts list of similar docs
+                with open('%s/separate/%s.txt' % (output_folder, cur_fname.split('.')[0]), 'w') as sep_res:
+                    sep_res.write('%s\n\n' % cur_fname)
+                    for sim in top_similar:
+                        sep_res.write('%s\n' % get_filename(sim[0]))
 
     logging.info("save index")
     index.save('saved/lda_index_%s.index' % dt)
