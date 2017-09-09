@@ -58,7 +58,7 @@ def main():
     if conf.mode == 'fit':
         if conf.algorithm == "doc2vec":
             logging.info("fitting doc2vec...")
-            doc2vec.fit_model(data, alpha=conf.alpha, n_epochs=conf.n_epochs,
+            doc2vec.fit_model(data, dm=conf.dm, alpha=conf.alpha, n_epochs=conf.n_epochs,
                               vector_dim=conf.vector_dim, window=conf.window,
                               min_count=conf.min_count, n_best=conf.num_best)
         elif conf.algorithm == "lda":

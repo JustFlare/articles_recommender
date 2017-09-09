@@ -7,9 +7,10 @@ from gensim.models.doc2vec import TaggedDocument
 from gensim.models import Doc2Vec
 
 
-def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
+def fit_model(docs, dm, vector_dim, n_epochs, alpha, window, min_count, n_best):
     '''
     :param docs: dict where key is name of file and value is 
+    :param dm: vectorization apprach
     :param vector_dim: dimensionality of the feature vector
     :param n_epochs: number of training iteration
     :param alpha: initial learning rate
@@ -24,7 +25,7 @@ def fit_model(docs, vector_dim, n_epochs, alpha, window, min_count, n_best):
 
     logging.info("creating tagged docs...")
     tagged_docs = [TaggedDocument(w_list, [index]) for index, w_list in docs.items()]
-    doc2vec = Doc2Vec(tagged_docs, dm=0, alpha=alpha, size=vector_dim, window=window,
+    doc2vec = Doc2Vec(tagged_docs, dm=dm, alpha=alpha, size=vector_dim, window=window,
                       min_count=min_count)
     logging.info("start training")
     for epoch in range(n_epochs):
