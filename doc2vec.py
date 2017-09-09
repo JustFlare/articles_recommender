@@ -38,7 +38,7 @@ def fit_model(docs, dm, vector_dim, n_epochs, alpha, window, min_count, n_best):
     logging.info("saving model...")
     dt = cur_date()
     doc2vec.save('saved/doc2vec_%s_%s.serialized' % (vector_dim, dt))
-    # doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
+    doc2vec.delete_temporary_training_data(keep_doctags_vectors=True, keep_inference=True)
 
     # write results
     with open('%s/similarities.txt' % output_folder, mode='w') as res_file:
