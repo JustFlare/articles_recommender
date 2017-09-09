@@ -55,36 +55,19 @@ def main():
     data = collect_data(conf.data_dir, conf.do_lemmatize, conf.lemmatized_data,
                         conf.data_encoding)
 
-    if conf.mode == 'fit':
-        if conf.algorithm == "doc2vec":
-            logging.info("fitting doc2vec...")
-            doc2vec.fit_model(data, dm=conf.dm, alpha=conf.alpha, n_epochs=conf.n_epochs,
-                              vector_dim=conf.vector_dim, window=conf.window,
-                              min_count=conf.min_count, n_best=conf.num_best)
-        elif conf.algorithm == "lda":
-            logging.info("fitting lda...")
-            lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
-                          min_prob=conf.min_prob, passes=conf.passes,
-                          eval_every=conf.eval_every, n_best=conf.num_best,
-                          min_df=conf.min_df, max_df=conf.max_df)
-        else:
-            raise UnexpectedArgumentException("Invalid algorithm!")
-
-    elif conf.mode == 'update':
-        if conf.algorithm == "doc2vec":
-            logging.info("updating doc2vec model {0}".format(conf.saved_model))
-            doc2vec.update_model(conf.saved_model, data, conf.n_epochs)
-        elif conf.algorithm == "lda":
-            logging.info("updating lda model {0}".format(conf.saved_model))
-            lda.update_model(data, conf.saved_model)
-        else:
-            raise UnexpectedArgumentException("Invalid algorithm!")
-
-    elif conf.mode == 'rank':
-        print("not implemented yet")
-
+    if conf.algorithm == "doc2vec":
+        logging.info("fitting doc2vec...")
+        doc2vec.fit_model(data, dm=conf.dm, alpha=conf.alpha, n_epochs=conf.n_epochs,
+                          vector_dim=conf.vector_dim, window=conf.window,
+                          min_count=conf.min_count, n_best=conf.num_best)
+    elif conf.algorithm == "lda":
+        logging.info("fitting lda...")
+        lda.fit_model(data, n_topics=conf.topics, iterations=conf.iterations,
+                      min_prob=conf.min_prob, passes=conf.passes,
+                      eval_every=conf.eval_every, n_best=conf.num_best,
+                      min_df=conf.min_df, max_df=conf.max_df)
     else:
-        raise UnexpectedArgumentException("Invalid mode!")
+        raise UnexpectedArgumentException("Invalid algorithm!")
 
     print("Process finished.\n")
     logging.info("Process finished.")

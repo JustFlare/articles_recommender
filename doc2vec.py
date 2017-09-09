@@ -63,24 +63,6 @@ def fit_model(docs, dm, vector_dim, n_epochs, alpha, window, min_count, n_best):
                         sep_res.write('%s\n' % get_filename(sim[0]))
 
 
-def update_model(saved_model_path, docs, n_epochs):
-    logging.info("loading model")
-    doc2vec = Doc2Vec.load(saved_model_path)
-    logging.info("creating tagged docs...")
-    tagged_docs = [TaggedDocument(w_list, str(index)) for index, w_list in docs.items()]
-
-    for epoch in range(n_epochs):
-        if epoch % 20 == 0:
-            logging.info('Training offset: %s' % epoch)
-            print('Training offset: %s' % epoch)
-        doc2vec.train(tagged_docs, total_examples=doc2vec.corpus_count, epochs=doc2vec.iter)
-        doc2vec.alpha -= 0.002  # decrease the learning rate
-        doc2vec.min_alpha = doc2vec.alpha  # fix the learning rate, no decay
-
-    logging.info("saving model...")
-    doc2vec.save('saved/doc2vec_%s_%s.serialized' % (doc2vec.vector_dim, cur_date()))
-
-
 def transform_to_doc2vec_space(doc2vec, doc):
     """
     :param Doc2Vec doc2vec:

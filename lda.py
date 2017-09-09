@@ -76,54 +76,6 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best, 
             f.write("#%s: %s\n" % (get_filename(paths[i]), topics))
 
 
-def update_model(data, saved_model_path):
-    logging.info("creating corpus...")
-    id2word, corpus = make_corpus(list(data.values()))
-
-    logging.info("loading model and its index")
-    lda = LdaModel.load(saved_model_path)
-    # TODO: может быть лучше сделать явное указание пользователем индекса в конфиге?
-    index = Similarity.load('saved/lda_index_%s.index' % saved_model_path[-20:-11])
-
-    logging.info("updating model and index")
-    lda.update(corpus)
-    index.add_documents(lda[corpus])
-
-    logging.info("saving...")
-    dt = cur_date()
-    lda.save('saved/lda_%s_%s.serialized' % (lda.n_topics, dt))
-    index.save('saved/lda_index_%s.index' % dt)
-
-
-def rank(new_docs, saved_model_path, n_best):
-    logging.info("creating corpus from new documents...")
-    # TODO: тут нужно старый словарь восстанвливать
-    id2word, corpus = make_corpus(list(new_docs.values()))
-
-    logging.info("loading model and its index")
-    lda = LdaModel.load(saved_model_path)
-    index = Similarity.load('saved/lda_index_%s.index' % saved_model_path[-20:-11])
-
-    # add new documents to similarity index in order to compare them also betweeen themselves
-    logging.info("update index")
-    lda_corpus = lda[corpus]
-    index.num_best = n_best
-    index.add_documents(lda_corpus)
-    # lda.update(corpus)
-
-    # TODO: нужно продумать механизм сохранения перзистентности
-    filenames = None
-
-    logging.info("write all similarities to result file")
-    with open('result_lda_%s.txt' % cur_date(), mode='w') as res_file:
-        for i, similarities in enumerate(index[lda_corpus]):
-            top_similar = [(filenames[s[0]], s[1]) for s in similarities if s[0] != i]
-            res_file.write('%s: %s\n' % (filenames[i], top_similar))
-
-    logging.info("save updated index")
-    index.save('saved/lda_index_%s.index' % saved_model_path[-20:-11])
-
-
 def transform_to_topic_space(lda, doc):
     """
     :param LdaModel lda:
