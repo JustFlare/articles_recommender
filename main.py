@@ -7,7 +7,7 @@ import traceback
 from collections import OrderedDict
 
 from preprocess import preprocess_text
-from util import get_title, cur_date
+from util import get_title, cur_date, get_list
 import doc2vec
 import lda
 import conf
@@ -66,7 +66,8 @@ def main():
                       min_prob=conf.min_prob, passes=conf.passes,
                       eval_every=conf.eval_every, n_best=conf.num_best,
                       min_df=conf.min_df, max_df=conf.max_df,
-                      preserved_words=conf.preserved_words_list)
+                      preserved_words=get_list(conf.preserved_words_list,
+                                               encoding=conf.data_encoding))
     else:
         raise UnexpectedArgumentException("Invalid algorithm!")
 

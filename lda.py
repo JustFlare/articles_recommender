@@ -3,7 +3,7 @@ import numpy as np
 import logging
 import os
 
-from util import get_title, cur_date, get_filename
+from util import get_title, cur_date, get_filename, get_list
 
 from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
@@ -15,7 +15,8 @@ def make_corpus(docs, min_df, max_df, preserved_words):
     dictionary = Dictionary(docs)
 
     # remove frequency extremes
-    dictionary.filter_extremes(no_below=min_df, no_above=max_df, keep_tokens=preserved_words)
+    dictionary.filter_extremes(no_below=min_df, no_above=max_df,
+                               keep_tokens=preserved_words)
 
     # convert tokenized documents into a document-term matrix
     corpus = [dictionary.doc2bow(text) for text in docs]
