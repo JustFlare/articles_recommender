@@ -4,8 +4,11 @@ import os
 
 
 def get_list(filename, encoding):
-    with open(filename, 'r', encoding=encoding) as f:
-        lines = f.read().splitlines()
+    if os.path.exists(filename):
+        with open(filename, 'r', encoding=encoding) as f:
+            lines = f.read().splitlines()
+    else:
+        lines = []
     return lines
 
 
