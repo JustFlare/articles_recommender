@@ -58,7 +58,6 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best, 
 
                 # for each doc we make separate file which containts list of similar docs
                 with open('%s/separate/%s.txt' % (output_folder, cur_fname.split('.')[0]), 'w') as sep_res:
-                    sep_res.write('%s\n\n' % cur_fname)
                     for sim in top_similar:
                         sep_res.write('%s\n' % get_filename(sim[0]))
 
