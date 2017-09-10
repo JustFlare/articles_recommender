@@ -14,7 +14,7 @@ tokenizer = RegexpTokenizer('\w+')
 mystem = Mystem()
 
 stop_words = set(stopwords.words('russian')).union(set(stopwords.words('english')))\
-    .union(set(get_list(conf.stopwords_file, encoding=conf.data_encoding)))
+    .union(set(get_list(conf.stopwords_list, encoding=conf.data_encoding)))
 
 
 def preprocess_text(text, do_lemmatize):
