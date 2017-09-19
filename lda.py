@@ -3,20 +3,26 @@ import numpy as np
 import logging
 import os
 
-from util import get_title, cur_date, get_filename, get_list
+from util import get_title, cur_date, get_filename
 
 from gensim.similarities import Similarity
 from gensim.corpora import Dictionary
 from gensim.models.ldamodel import LdaModel
 
 
-def make_corpus(docs, min_df, max_df, preserved_words):
+def make_corpus(docs, min_df, max_df, preserved_words, outfolder):
     # turn our tokenized documents into a id <-> term dictionary
     dictionary = Dictionary(docs)
+    tokens = list(dictionary.token2id.keys())
 
     # remove frequency extremes
     dictionary.filter_extremes(no_below=min_df, no_above=max_df,
                                keep_tokens=preserved_words)
+
+    # save discarded tokens list
+    discarded_tokens = [t for t in tokens if t not in dictionary.token2id]
+    with open("%s/discarded_tokens.txt" % outfolder, 'w') as outfile:
+        outfile.write("\n".join(discarded_tokens))
 
     # convert tokenized documents into a document-term matrix
     corpus = [dictionary.doc2bow(text) for text in docs]
@@ -31,7 +37,8 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best, 
     os.makedirs("%s/separate" % output_folder, exist_ok=True)
 
     logging.info("creating corpus...")
-    dictionary, corpus = make_corpus(list(data.values()), min_df, max_df, preserved_words)
+    dictionary, corpus = make_corpus(list(data.values()), min_df, max_df,
+                                     preserved_words, output_folder)
     # generate LDA model
     logging.info("training model...")
     lda = LdaModel(corpus, num_topics=n_topics, id2word=dictionary, iterations=iterations,
@@ -75,6 +82,9 @@ def fit_model(data, n_topics, iterations, passes, min_prob, eval_every, n_best, 
     with open("%s/document_topics.txt" % output_folder, 'w') as f:
         for i, topics in enumerate(lda[corpus]):
             f.write("#%s: %s\n" % (get_filename(paths[i]), topics))
+
+    # save dictionary
+    dictionary.save_as_text("%s/dictionary.txt" % output_folder)
 
 
 def transform_to_topic_space(lda, doc):
